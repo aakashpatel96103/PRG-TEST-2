@@ -62,39 +62,28 @@ pipeline {
 
         stage('Start Swagger Access') {
             steps {
-                powershell '''
-                    $port = 8001
+                bat '''
+                    set JENKINS_NODE_COOKIE=dontKillMe
 
-                    $existing = Get-NetTCPConnection `
-                        -LocalPort $port `
-                        -State Listen `
-                        -ErrorAction SilentlyContinue
+                    start "FastAPI-PortForward" /B kubectl port-forward service/employee-backend 8001:8000 -n employee-system
 
-                    if ($existing) {
-                        Write-Host "Port 8001 is already running."
-                    }
-                    else {
-                        Write-Host "Starting FastAPI port-forward..."
+                    timeout /t 5 /nobreak >nul
 
-                        Start-Process `
-                            -FilePath "kubectl.exe" `
-                            -ArgumentList "port-forward","service/employee-backend","8001:8000","-n","employee-system" `
-                            -WindowStyle Hidden
+                    echo.
+                    echo ==========================================
+                    echo FastAPI Port Forward Started
+                    echo ==========================================
+                    echo Swagger UI:
+                    echo http://localhost:8001/docs
+                    echo.
+                    echo Swagger Alias:
+                    echo http://localhost:8001/doc
+                    echo.
+                    echo Health:
+                    echo http://localhost:8001/health
+                    echo ==========================================
 
-                        Start-Sleep -Seconds 5
-                    }
-
-                    Write-Host ""
-                    Write-Host "=========================================="
-                    Write-Host " FastAPI Swagger UI"
-                    Write-Host " http://localhost:8001/docs"
-                    Write-Host ""
-                    Write-Host " Short Swagger URL"
-                    Write-Host " http://localhost:8001/doc"
-                    Write-Host ""
-                    Write-Host " Health Check"
-                    Write-Host " http://localhost:8001/health"
-                    Write-Host "=========================================="
+                    netstat -ano | findstr :8001
                 '''
             }
         }
@@ -106,14 +95,17 @@ pipeline {
         }
 
         success {
+            echo '=========================================='
             echo 'BUILD SUCCESS'
-            echo 'Swagger: http://localhost:8001/docs'
+            echo '=========================================='
+            echo 'Swagger UI: http://localhost:8001/docs'
             echo 'Swagger Alias: http://localhost:8001/doc'
             echo 'Health: http://localhost:8001/health'
+            echo '=========================================='
         }
 
         failure {
-            echo 'BUILD FAILED - Check the stage above for the error.'
+            echo 'BUILD FAILED - Check the failed stage above.'
         }
     }
 }
