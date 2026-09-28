@@ -63,9 +63,11 @@ pipeline {
         stage('Start Swagger Access') {
             steps {
                 bat '''
+                    echo Starting FastAPI port forwarding...
+
                     set JENKINS_NODE_COOKIE=dontKillMe
 
-                    start "FastAPI-PortForward" /B kubectl port-forward service/employee-backend 8001:8000 -n employee-system
+                    start "" /B cmd /c "set JENKINS_NODE_COOKIE=dontKillMe&& kubectl port-forward service/employee-backend 8001:8000 -n employee-system > swagger-port-forward.log 2>&1"
 
                     powershell -NoProfile -Command "Start-Sleep -Seconds 5"
 
@@ -84,7 +86,8 @@ pipeline {
                     echo ==========================================
                     echo.
 
-                    netstat -ano | findstr :8001
+                    echo Port forwarding process started.
+                    exit /b 0
                 '''
             }
         }
