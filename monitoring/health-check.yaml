@@ -1,0 +1,3 @@
+# Simple monitoring configuration
+# Kubernetes probes monitor backend health automatically.
+# Manual check: curl http://localhost:8000/health
