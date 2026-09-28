@@ -1,108 +1,152 @@
 # Employee Management System – CI/CD Pipeline
 
-A simple college-friendly Employee Management System using FastAPI, React, SQLite, Jenkins, Docker and Kubernetes.
+A simple college-friendly Employee Management System using **FastAPI, SQLite, Jenkins, Docker and Kubernetes**.
 
 ## Features
+
 - JWT authentication
-- Employee CRUD
-- FastAPI Swagger documentation
+- Employee CRUD operations
+- FastAPI Swagger UI
 - Automated tests with Pytest
 - Jenkins CI/CD pipeline
-- Versioned Docker images
-- Docker Compose
+- Versioned Docker image
 - Kubernetes deployment
-- Kubernetes health checks
+- Kubernetes readiness and liveness health checks
 - Basic security/dependency validation
 
-## Default Login
-Username: `admin`
-Password: `admin123`
+## Project Flow
 
-The backend creates the database automatically. Register the demo user through:
-`POST /auth/register`
+GitHub → Jenkins → Tests → Security Validation → Docker Build → Versioned Artifact → Kubernetes → Health Check → Swagger API
 
-## Run Backend
+## Backend Run
 
 ```bash
 cd backend
 python -m venv venv
 venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
+python -m pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
-Backend: http://localhost:8000  
-Swagger: http://localhost:8000/docs  
-Health: http://localhost:8000/health
+Open:
 
-## Run Frontend
+- API: http://localhost:8000
+- Swagger: http://localhost:8000/docs
+- Health: http://localhost:8000/health
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## Authentication
 
-Frontend: http://localhost:5173
+Register a user using:
 
-## Docker
+`POST /auth/register`
 
-From the project root:
+Then login using:
 
-```bash
-docker compose -f docker/docker-compose.yml up --build
-```
+`POST /auth/login`
 
-Frontend: http://localhost:8080  
-Backend: http://localhost:8000
+Copy the JWT token and use the **Authorize** button in Swagger:
 
-## Tests
+`Bearer YOUR_TOKEN`
+
+## Employee CRUD
+
+Use Swagger to test:
+
+- `GET /employees`
+- `GET /employees/{id}`
+- `POST /employees`
+- `PUT /employees/{id}`
+- `DELETE /employees/{id}`
+
+## Automated Tests
 
 ```bash
 cd backend
 python -m pytest -v
 ```
 
-## Jenkins
+## Docker
 
-Create a Jenkins Pipeline job connected to the Git repository.
+```bash
+docker build -t employee-backend:1.0.0 backend
+docker run -p 8000:8000 employee-backend:1.0.0
+```
+
+## Jenkins Pipeline
 
 The Jenkinsfile performs:
-1. Checkout
-2. Backend automated tests
-3. Frontend build validation
-4. Dependency/security validation
-5. Docker image build
-6. Artifact version validation
-7. Kubernetes deployment
-8. Deployment health/status check
+
+1. Checkout from Git
+2. Install backend dependencies
+3. Run Pytest
+4. Validate dependencies
+5. Build Docker image
+6. Read artifact version
+7. Deploy FastAPI to Kubernetes
+8. Wait for rollout
+9. Display pods and service status
 
 ## Kubernetes
 
-The manifests assume Docker images named:
-
-- employee-backend:1.0.0
-- employee-frontend:1.0.0
-
-For Minikube, build the images inside Minikube's Docker environment before applying the manifests.
+Apply:
 
 ```bash
-kubectl apply -f kubernetes/
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/configmap.yaml
+kubectl apply -f kubernetes/backend-deployment.yaml
+kubectl apply -f kubernetes/backend-service.yaml
+```
+
+Check:
+
+```bash
 kubectl get pods -n employee-system
 kubectl get services -n employee-system
 ```
 
-## Project Requirement Mapping
+The backend service uses NodePort **30081**.
+
+For environments where the Kubernetes node is reachable locally:
+
+`http://localhost:30081/docs`
+
+If localhost NodePort is not reachable, use:
+
+```bash
+kubectl port-forward service/employee-backend 8000:8000 -n employee-system
+```
+
+Then open:
+
+`http://localhost:8000/docs`
+
+## Monitoring
+
+Basic monitoring is demonstrated using:
+
+```bash
+kubectl get pods -n employee-system
+kubectl get services -n employee-system
+kubectl describe pod -n employee-system
+```
+
+The application health endpoint is:
+
+`GET /health`
+
+Kubernetes also uses readiness and liveness probes against `/health`.
+
+## Requirement Mapping
 
 | Requirement | Implementation |
 |---|---|
 | Authentication | JWT |
-| CRUD | Employee API + React UI |
+| CRUD | FastAPI Employee API |
 | CI/CD | Jenkinsfile |
 | Automated testing | Pytest |
-| Versioned artifacts | VERSION + Docker tags |
-| Docker | Backend and frontend Dockerfiles |
-| Kubernetes | Deployments and Services |
-| Health checks | FastAPI /health + probes |
-| Monitoring | Kubernetes pod/service status + health endpoint |
-| Security validation | JWT protection + pip check |
+| Versioned artifacts | VERSION + Docker tag |
+| Docker | Backend Dockerfile |
+| Kubernetes | Deployment + NodePort Service |
+| Health checks | `/health` + Kubernetes probes |
+| Monitoring | Kubernetes status + health endpoint |
+| Security validation | JWT protection + dependency check |
