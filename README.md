@@ -150,3 +150,16 @@ Kubernetes also uses readiness and liveness probes against `/health`.
 | Health checks | `/health` + Kubernetes probes |
 | Monitoring | Kubernetes status + health endpoint |
 | Security validation | JWT protection + dependency check |
+
+
+## Automatic Swagger Access
+
+After Jenkins successfully deploys Kubernetes, it automatically starts:
+
+`localhost:8001` -> `employee-backend:8000`
+
+Open:
+
+- Swagger: http://localhost:8001/docs
+- Short alias: http://localhost:8001/doc
+- Health: http://localhost:8001/health

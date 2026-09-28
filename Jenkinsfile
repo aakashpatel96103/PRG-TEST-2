@@ -8,9 +8,7 @@ pipeline {
 
     stages {
         stage('Checkout') {
-            steps {
-                checkout scm
-            }
+            steps { checkout scm }
         }
 
         stage('Backend Tests') {
@@ -21,15 +19,11 @@ pipeline {
         }
 
         stage('Security Validation') {
-            steps {
-                bat 'python -m pip check'
-            }
+            steps { bat 'python -m pip check' }
         }
 
         stage('Docker Build') {
-            steps {
-                bat 'docker build -t %BACKEND_IMAGE% backend'
-            }
+            steps { bat 'docker build -t %BACKEND_IMAGE% backend' }
         }
 
         stage('Artifact Version') {
@@ -53,6 +47,13 @@ pipeline {
             steps {
                 bat 'kubectl get pods -n employee-system'
                 bat 'kubectl get services -n employee-system'
+                bat 'kubectl exec deployment/employee-backend -n employee-system -- python -c "import urllib.request; print(urllib.request.urlopen(''http://127.0.0.1:8000/health'').read().decode())"'
+            }
+        }
+
+        stage('Start Swagger Access') {
+            steps {
+                powershell '& "$env:WORKSPACE\\scripts\\start-port-forward.ps1"'
             }
         }
     }
@@ -60,6 +61,10 @@ pipeline {
     post {
         always {
             echo 'Backend CI/CD pipeline completed.'
+        }
+        success {
+            echo 'Swagger UI: http://localhost:8001/docs'
+            echo 'Swagger alias: http://localhost:8001/doc'
         }
     }
 }
