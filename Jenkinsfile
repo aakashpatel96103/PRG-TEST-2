@@ -67,11 +67,11 @@ pipeline {
 
                     start "FastAPI-PortForward" /B kubectl port-forward service/employee-backend 8001:8000 -n employee-system
 
-                    timeout /t 5 /nobreak >nul
+                    powershell -NoProfile -Command "Start-Sleep -Seconds 5"
 
                     echo.
                     echo ==========================================
-                    echo FastAPI Port Forward Started
+                    echo FASTAPI SWAGGER
                     echo ==========================================
                     echo Swagger UI:
                     echo http://localhost:8001/docs
@@ -82,6 +82,7 @@ pipeline {
                     echo Health:
                     echo http://localhost:8001/health
                     echo ==========================================
+                    echo.
 
                     netstat -ano | findstr :8001
                 '''
